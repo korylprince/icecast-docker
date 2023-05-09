@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Example Player</title>
+        <style type="text/css">
+            @keyframes spin {
+                from {transform: rotate(0deg);}
+                to {transform: rotate(360deg);}
+            }
+            .player-btn {
+                width: 125px;
+                border: none;
+                background: none;
+            }
+            .player-btn svg {
+                fill: #1b4388;
+            }
+            .player-btn svg:hover {
+                fill: #2660a7;
+            }
+            .player-btn.loading svg {
+                animation-name: spin;
+                animation-duration: 1s;
+                animation-iteration-count: infinite;
+                animation-timing-function: linear;
+            }
+            .player-btn.error svg {
+                fill: #c8102e;
+            }
+            .player-btn.error svg:hover {
+                fill: #e7273d;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="player"></div>
+
+        <script type="text/javascript">
+            class Player {
+                audio
+                btn
+                loaded = false
+                error = false
+                playsvg = '<path d="M19 3H5C3.89 3 3 3.89 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.89 20.1 3 19 3M10 16V8L15 12" />'
+                pausesvg = '<path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.11 3.9 21 5 21H19C20.11 21 21 20.11 21 19V5C21 3.89 20.1 3 19 3M11 16H9V8H11V16M15 16H13V8H15V16Z" />'
+                loadingsvg = '<path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />'
+                errorsvg = '<path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />'
+
+                constructor(id, src) {
+                    const placeholder = document.getElementById(id)
+                    const root = document.createElement("div")
+                    root.id = id
+
+                    this.audio = document.createElement("audio")
+                    this.audio.src = src
+                    this.audio.addEventListener("play", () => this.onplay())
+                    this.audio.addEventListener("playing", () => this.onplaying())
+                    this.audio.addEventListener("pause", () => this.onpause())
+                    this.audio.addEventListener("error", () => this.onerror())
+                    root.appendChild(this.audio)
+
+                    this.btn = document.createElement("button")
+                    this.btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"></svg>'
+                    const path = document.createElement("path")
+                    this.btn.firstChild.appendChild(path)
+                    this.set_svg(this.playsvg)
+                    this.btn.classList.add("player-btn")
+                    this.btn.addEventListener("click", () => this.toggle())
+                    root.appendChild(this.btn)
+
+                    placeholder.replaceWith(root)
+                }
+
+                onplay() {
+                    this.set_svg(this.loadingsvg)
+                    this.btn.classList.remove("error")
+                    this.btn.classList.add("loading")
+                    this.btn.title = "Loading"
+                    this.btn.disabled = true
+                }
+                onplaying() {
+                    this.loaded = true
+                    this.error = false
+                    this.btn.classList.remove("error")
+                    this.btn.classList.remove("loading")
+                    this.set_svg(this.pausesvg)
+                    this.btn.title = "Pause"
+                    this.btn.disabled = false
+                }
+                onpause() {
+                    if (this.error) {return}
+                    this.btn.classList.remove("loading")
+                    this.set_svg(this.playsvg)
+                    this.btn.title = "Play"
+                    this.btn.disabled = false
+                }
+                onerror() {
+                    this.error = true
+                    this.btn.classList.remove("loading")
+                    this.btn.classList.add("error")
+                    this.set_svg(this.errorsvg)
+                    this.btn.title = "Retry"
+                    this.btn.disabled = false
+                }
+
+                set_svg(svg) {
+                    this.btn.firstChild.lastChild.outerHTML = svg
+                }
+
+                toggle() {
+                    if (this.audio.paused) {
+                        if (this.loaded || this.error) {
+                            this.audio.load()
+                        }
+                        this.audio.play()
+                        return
+                    }
+
+                    this.audio.pause()
+                }
+            }
+
+            const player = new Player("player", "https://26273.live.streamtheworld.com/CSPANRADIO.mp3")
+        </script>
+    </body>
+</html>
